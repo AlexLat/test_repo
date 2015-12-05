@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Just motion</title>
+</head>
+<body>
+
+<form align = "center">
+<h1>Лаба 1</h1>
+<h3>Задайте характеристики движения:</h3>
+Амплитуда <font color="#33CC33"> (1-е тело) </font> (желательно в пределах от -500 до 500):
+<input id = "a" type="text" style="margin-bottom:5px"> м <br>
+Циклическая частота <font color="#33CC33"> (1-е тело) </font> :
+<input id = "w" type="text" style="margin-bottom:5px"> рад/с <br>
+Скорость <font color="yellow"> (2-е тело) </font> :
+<input id = "v0" type="text" style="margin-bottom:5px"> м/с <br>
+Эль нулевое <font color="yellow"> (2-е тело) </font> (желательно в пределах от -500 до 500):
+<input id = "l0" type="text" style="margin-bottom:5px"> м <br>
+<button id="button", type="button", onclick="set_init()">Установить в начальное положение для введенных характеристик</button> <br>
+<button id="button", type="button", onclick="go()">Старт</button>
+<button id="button", type="button", onclick="stop()">Стоп</button>
+<button id="button", type="button", onclick="initial_locate()">Сброс</button> <br> <br>
+</form>
+
+<svg id = "svg" width="1060" height="200" style="display: block; margin: auto">
+	<rect width="1060" height="200" style="fill:rgb(0, 0, 153)" /> 
+	<line x1 = "0", y1 = "100", x2 = "1060", y2 = "100", style="stroke:rgb(255,0,0);stroke-width:2;opacity:0.5" />
+</svg>
+
+<div id="head" style="background-color:lightgray; display:none; position:absolute; top:10px; left:10px" > Программа выполняется... </div>
+
+<script>
+var i;
+
+for (i = 30; i <= 1030; i += 100)
+{
+var line = document.createElementNS("http://www.w3.org/2000/svg","line");
+line.setAttributeNS(null,"x1",i);
+line.setAttributeNS(null,"x2",i);
+line.setAttributeNS(null,"y1",90 - (i==530?10:0));
+line.setAttributeNS(null,"y2",110 + (i==530?10:0));
+line.setAttributeNS(null,"stroke", "red");
+line.setAttributeNS(null,"stroke-width", "2");
+line.setAttributeNS(null,"opacity", "0.5");
+
+document.getElementById('svg').appendChild(line);
+}
+</script>
+
+<div id = "meet" style="text-align:center"/>
+
+<script>
+
+function initial_locate()
+{
+clearInterval(main_interval);
+document.getElementById('head').style.display = 'none';
+
+circle1.setAttributeNS(null,"cx",530);
+circle1.setAttributeNS(null,"cy",100);
+
+circle1_1.setAttributeNS(null,"cx",530);
+circle1_1.setAttributeNS(null,"cy",100);
+
+circle2.setAttributeNS(null,"cx",30);
+circle2.setAttributeNS(null,"cy",100);
+
+circle2_1.setAttributeNS(null,"cx",30);
+circle2_1.setAttributeNS(null,"cy",100);
+}
+
+var circle1 = document.createElementNS("http://www.w3.org/2000/svg","circle");
+circle1.setAttributeNS(null,"id","circle1");
+circle1.setAttributeNS(null,"r",30);
+circle1.setAttributeNS(null,"fill", "#33CC33");
+circle1.setAttributeNS(null,"fill-opacity", "0.7");
+
+var circle1_1 = document.createElementNS("http://www.w3.org/2000/svg","circle");
+circle1_1.setAttributeNS(null,"id","circle1_1");
+circle1_1.setAttributeNS(null,"r",3);
+circle1_1.setAttributeNS(null,"fill", "black");
+circle1_1.setAttributeNS(null,"fill-opacity", "0.7");
+
+var circle2 = document.createElementNS("http://www.w3.org/2000/svg","circle");
+circle2.setAttributeNS(null,"id","circle2");
+circle2.setAttributeNS(null,"r",30);
+circle2.setAttributeNS(null,"fill", "yellow");
+circle2.setAttributeNS(null,"fill-opacity", "0.7");
+
+var circle2_1 = document.createElementNS("http://www.w3.org/2000/svg","circle");
+circle2_1.setAttributeNS(null,"id","circle2_1");
+circle2_1.setAttributeNS(null,"r",3);
+circle2_1.setAttributeNS(null,"fill", "black");
+circle2_1.setAttributeNS(null,"fill-opacity", "0.7");
+
+initial_locate();
+
+document.getElementById('svg').appendChild(circle1);
+document.getElementById('svg').appendChild(circle2);
+document.getElementById('svg').appendChild(circle1_1);
+document.getElementById('svg').appendChild(circle2_1);
+
+var t = 0;
+var a;
+var w;
+var v0;
+var l0;
+var x1_old;
+var x2_old;
+
+function foo_int()
+{
+x1 = a * Math.sin(w * t * 0.01) + 530;
+x2 = v0 * t * 0.01 + (530 + parseInt(l0));
+
+document.getElementById("circle1").setAttribute('cx', x1);
+document.getElementById("circle1_1").setAttribute('cx', x1);
+document.getElementById("circle2").setAttribute('cx', x2);
+document.getElementById("circle2_1").setAttribute('cx', x2);
+
+if (t == 0)
+{
+	if (x1 == x2)
+	{
+	document.getElementById('meet').innerHTML = document.getElementById('meet').innerHTML + "<br>" + "Тела начали движение из начала координат!";
+	clearInterval(main_interval);
+	document.getElementById('head').style.display = 'none';
+	}
+} else {
+	if ( (Math.sign(x2_old - x1_old) != Math.sign(x2 - x1)) )
+	{
+	document.getElementById('meet').innerHTML = document.getElementById('meet').innerHTML + "<br>" + "Тела встретились на промежутке от " + ((t - 1) * 0.01).toFixed(2) + " до " + (t * 0.01).toFixed(2) + " с";
+	clearInterval(main_interval);
+	document.getElementById('head').style.display = 'none';
+	}
+
+}
+
+x1_old = x1;
+x2_old = x2;
+
+t++;
+}
+
+var main_interval;
+
+function go()
+{
+set_init();
+
+t = 0;
+main_interval = setInterval(foo_int, 10);
+document.getElementById('head').style.display = 'block';
+}
+
+function stop()
+{
+clearInterval(main_interval);
+document.getElementById('head').style.display = 'none';
+}
+
+function set_init()
+{
+clearInterval(main_interval);
+document.getElementById('head').style.display = 'none';
+
+a = document.getElementById('a').value;
+w = document.getElementById('w').value;
+v0 = document.getElementById('v0').value;
+l0 = document.getElementById('l0').value;
+
+if (a == "" || w == "" || v0 == "" || l0 == "")
+{
+alert('Вы не ввели все параметры!');
+} else {
+document.getElementById('meet').innerHTML = '';
+
+document.getElementById('circle1').setAttributeNS(null,"cx",530);
+document.getElementById('circle1').setAttributeNS(null,"cy",100);
+
+document.getElementById('circle1_1').setAttributeNS(null,"cx",530);
+document.getElementById('circle1_1').setAttributeNS(null,"cy",100);
+
+document.getElementById('circle2').setAttributeNS(null,"cx",530 + parseInt(l0));
+document.getElementById('circle2').setAttributeNS(null,"cy",100);
+
+document.getElementById('circle2_1').setAttributeNS(null,"cx",530 + parseInt(l0));
+document.getElementById('circle2_1').setAttributeNS(null,"cy",100);
+}
+}
+
+</script>
+
+</body>
+</html>
